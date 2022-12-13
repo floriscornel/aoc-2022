@@ -1,3 +1,5 @@
+mod day1;
+mod day2;
 
 use std::fs::File;
 use std::io::{self, BufRead};
