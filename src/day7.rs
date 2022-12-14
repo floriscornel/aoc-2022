@@ -1,6 +1,7 @@
 use crate::read_lines;
 
-#[derive(Debug)]
+const TOTAL_DISK_SIZE: usize = 70000000;
+const MIN_FREE_SPACE: usize = 30000000;
 struct Directory {
     name: String,
     children: Vec<Directory>,
@@ -10,8 +11,6 @@ struct Directory {
 impl Directory {
     fn add_file(&mut self, _name: &str, size: usize) {
         self.total_size += size;
-        // println!("add_file: {:?} -> {:?}", self.name, size);
-        // println!(" parent: {:?}", self);
     }
 
     fn add_dir(&mut self, name: &str) {
@@ -20,8 +19,6 @@ impl Directory {
             children: Vec::new(),
             total_size: 0,
         });
-        // println!("add_dir: {:?} -> {:?}", self.name, name);
-        // println!(" parent: {:?}", self);
     }
 
     fn get_child(&mut self, name: &str) -> &mut Directory {
@@ -46,7 +43,6 @@ impl Directory {
     }
 }
 
-#[derive(Debug)]
 struct FileSystem {
     root: Directory,
     current_path: String,
@@ -79,19 +75,15 @@ impl FileSystem {
             _ => path_list.push(dir_name),
         }
         self.current_path = path_list.join("/");
-        // println!("new current_path: {:?}", self.current_path);
     }
 
     fn current_dir(&mut self) -> &mut Directory {
-        let dir = self.root.get_subchild(self.current_path.as_str());
-        // println!("=> current_dir: {:?}", dir);
-        // println!("=> current_path: {:?}", self.current_path);
-        dir
+        self.root.get_subchild(self.current_path.as_str())
     }
 }
 
 #[allow(dead_code)]
-fn solve(filename: &str, _part1: bool) -> usize {
+fn solve(filename: &str, part1: bool) -> usize {
     let lines = read_lines(filename)
         .unwrap()
         .flatten()
@@ -101,7 +93,6 @@ fn solve(filename: &str, _part1: bool) -> usize {
 
     for line in lines.iter().skip(1) {
         let parts = line.split_whitespace().collect::<Vec<&str>>();
-        // println!("  line: {:?}", line);
         if parts[0] == "$" {
             if parts[1] == "cd" {
                 fs.cd(parts[2]);
@@ -117,10 +108,25 @@ fn solve(filename: &str, _part1: bool) -> usize {
         }
     }
 
-    get_folder_sizes(&mut fs.root)
-        .iter()
-        .filter(|&x| *x < 100000)
-        .sum()
+    fix_sizes(&mut fs.root);
+    let sizes = get_folder_sizes(&mut fs.root);
+
+    if part1 {
+        sizes.iter().filter(|&x| *x < 100000).sum()
+    } else {
+        let currently_free = TOTAL_DISK_SIZE - fs.root.total_size;
+        let to_delete = MIN_FREE_SPACE - currently_free;
+        sizes.into_iter().filter(|&x| x >= to_delete).min().unwrap()
+    }
+}
+
+fn fix_sizes(dir: &mut Directory) -> usize {
+    let mut sizes = vec![];
+    for child in &mut dir.children {
+        sizes.push(fix_sizes(child));
+    }
+    dir.total_size += sizes.iter().sum::<usize>();
+    dir.total_size
 }
 
 fn get_folder_sizes(dir: &mut Directory) -> Vec<usize> {
@@ -128,7 +134,6 @@ fn get_folder_sizes(dir: &mut Directory) -> Vec<usize> {
     for child in &mut dir.children {
         sizes.append(&mut get_folder_sizes(child));
     }
-    dir.total_size += sizes.iter().sum::<usize>();
     sizes.push(dir.total_size);
     sizes
 }
@@ -140,9 +145,9 @@ mod tests {
     #[test]
     fn run_test() {
         assert_eq!(solve("7.test.in", true), 95437);
-        // assert_eq!(solve("7.test.in", false), 19);
+        assert_eq!(solve("7.test.in", false), 24933642);
 
         println!("Answer 7 pt.1: {}", solve("7.in", true));
-        // println!("Answer 7 pt.2: {}", solve("7.in", false));
+        println!("Answer 7 pt.2: {}", solve("7.in", false));
     }
 }
