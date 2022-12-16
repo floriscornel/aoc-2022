@@ -1,12 +1,12 @@
 use crate::read_lines;
 
-enum RPS {
+enum Choice {
     Rock,
     Paper,
     Scissors,
 }
 
-impl RPS {
+impl Choice {
     fn new(str: &str) -> Self {
         match str {
             "A" | "X" => Self::Rock,
@@ -16,17 +16,17 @@ impl RPS {
         }
     }
 
-    fn anticipate(left: &RPS, result: &Result) -> Self {
+    fn anticipate(left: &Choice, result: &Result) -> Self {
         match (left, result) {
-            (RPS::Rock, Result::Draw)
-            | (RPS::Paper, Result::Lose)
-            | (RPS::Scissors, Result::Win) => Self::Rock,
-            (RPS::Rock, Result::Win)
-            | (RPS::Paper, Result::Draw)
-            | (RPS::Scissors, Result::Lose) => Self::Paper,
-            (RPS::Scissors, Result::Draw)
-            | (RPS::Rock, Result::Lose)
-            | (RPS::Paper, Result::Win) => Self::Scissors,
+            (Choice::Rock, Result::Draw)
+            | (Choice::Paper, Result::Lose)
+            | (Choice::Scissors, Result::Win) => Self::Rock,
+            (Choice::Rock, Result::Win)
+            | (Choice::Paper, Result::Draw)
+            | (Choice::Scissors, Result::Lose) => Self::Paper,
+            (Choice::Scissors, Result::Draw)
+            | (Choice::Rock, Result::Lose)
+            | (Choice::Paper, Result::Win) => Self::Scissors,
         }
     }
 }
@@ -38,17 +38,17 @@ enum Result {
 }
 
 impl Result {
-    fn play(left: RPS, right: RPS) -> Self {
+    fn play(left: Choice, right: Choice) -> Self {
         match (left, right) {
-            (RPS::Rock, RPS::Scissors) | (RPS::Paper, RPS::Rock) | (RPS::Scissors, RPS::Paper) => {
-                Self::Lose
-            }
-            (RPS::Rock, RPS::Rock) | (RPS::Paper, RPS::Paper) | (RPS::Scissors, RPS::Scissors) => {
-                Self::Draw
-            }
-            (RPS::Scissors, RPS::Rock) | (RPS::Rock, RPS::Paper) | (RPS::Paper, RPS::Scissors) => {
-                Self::Win
-            }
+            (Choice::Rock, Choice::Scissors)
+            | (Choice::Paper, Choice::Rock)
+            | (Choice::Scissors, Choice::Paper) => Self::Lose,
+            (Choice::Rock, Choice::Rock)
+            | (Choice::Paper, Choice::Paper)
+            | (Choice::Scissors, Choice::Scissors) => Self::Draw,
+            (Choice::Scissors, Choice::Rock)
+            | (Choice::Rock, Choice::Paper)
+            | (Choice::Paper, Choice::Scissors) => Self::Win,
         }
     }
 
@@ -69,13 +69,13 @@ fn solve2(filename: &str) -> i64 {
     let mut points = 0;
     for line in lines {
         let vec = line.split_whitespace().collect::<Vec<&str>>();
-        let (left, result) = (RPS::new(vec[0]), Result::new(vec[1]));
-        let right = RPS::anticipate(&left, &result);
+        let (left, result) = (Choice::new(vec[0]), Result::new(vec[1]));
+        let right = Choice::anticipate(&left, &result);
 
         points += match right {
-            RPS::Rock => 1,
-            RPS::Paper => 2,
-            RPS::Scissors => 3,
+            Choice::Rock => 1,
+            Choice::Paper => 2,
+            Choice::Scissors => 3,
         };
 
         points += match result {
@@ -94,12 +94,12 @@ fn solve(filename: &str) -> i64 {
     let mut points = 0;
     for line in lines {
         let vec = line.split_whitespace().collect::<Vec<&str>>();
-        let (left, right) = (RPS::new(vec[0]), RPS::new(vec[1]));
+        let (left, right) = (Choice::new(vec[0]), Choice::new(vec[1]));
 
         points += match right {
-            RPS::Rock => 1,
-            RPS::Paper => 2,
-            RPS::Scissors => 3,
+            Choice::Rock => 1,
+            Choice::Paper => 2,
+            Choice::Scissors => 3,
         };
 
         points += match Result::play(left, right) {
